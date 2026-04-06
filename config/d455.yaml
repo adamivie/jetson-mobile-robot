@@ -1,0 +1,13 @@
+# RealSense D455 parameters
+camera:
+  ros__parameters:
+    enable_color: true
+    enable_depth: true
+    align_depth.enable: true
+    pointcloud.enable: true
+    depth_module.profile: "640x480x30"
+    rgb_camera.profile: "640x480x30"
+    depth_module.global_time_enabled: true
+    spatial_filter.enable: true
+    temporal_filter.enable: true
+    hole_filling_filter.enable: true

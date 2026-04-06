@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+*.egg
+
+# Colcon build artifacts (live on Jetson, not in repo)
+build/
+install/
+log/
+
+# ROS
+*.bag
+*.db3
+
+# Setup script output
+setup_jetson.log
+
+# Editor / OS
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
