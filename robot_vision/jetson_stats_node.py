@@ -68,6 +68,11 @@ class JetsonStatsNode(Node):
             self.get_logger().error(f'Failed to connect to jtop service: {e}')
             raise
 
+        # Cache last known-good sensor values to avoid publishing 0 during jtop refresh gaps
+        self._last_temp: dict = {'cpu': None, 'gpu': None, 'soc': None, 'tj': None}
+        self._last_gpu_val = None
+        self._last_power_mw = None
+
         # Timer drives publishing at the requested rate
         self._timer = self.create_timer(period_s, self._publish_stats)
         self.get_logger().info(f'jetson_stats_node running at {rate_hz} Hz')
@@ -115,21 +120,23 @@ class JetsonStatsNode(Node):
 
         # ---- Temperatures ----------------------------------------------
         temps = self._jetson.temperature
-        def _get_temp(keys):
+        def _get_temp(keys, cache_key):
             for k in keys:
                 if k in temps:
                     v = temps[k]
-                    if isinstance(v, dict):
-                        return float(v.get('temp', 0.0))
-                    return float(v)
-            return 0.0
+                    val = float(v.get('temp', 0.0)) if isinstance(v, dict) else float(v)
+                    if val > 0.0:  # 0.0 / negative = jtop gap or offline sensor
+                        self._last_temp[cache_key] = val
+                        return val
+            # Fall back to last known-good value; only return 0 if never seen a valid reading
+            return self._last_temp[cache_key] if self._last_temp[cache_key] is not None else 0.0
 
-        self._pub_t_cpu.publish(Float32(data=_get_temp(['cpu', 'CPU', 'cpu-thermal'])))
-        self._pub_t_gpu.publish(Float32(data=_get_temp(['gpu', 'GPU', 'gpu-thermal'])))
+        self._pub_t_cpu.publish(Float32(data=_get_temp(['cpu', 'CPU', 'cpu-thermal'], 'cpu')))
+        self._pub_t_gpu.publish(Float32(data=_get_temp(['gpu', 'GPU', 'gpu-thermal'], 'gpu')))
         # soc0/soc1/soc2 are the three SoC thermal zones; use soc0 as representative
-        self._pub_t_soc.publish(Float32(data=_get_temp(['soc0', 'soc', 'SOC0', 'soc-thermal'])))
+        self._pub_t_soc.publish(Float32(data=_get_temp(['soc0', 'soc', 'SOC0', 'soc-thermal'], 'soc')))
         # tj = Tjunction — highest temp across all cores, most useful single thermal value
-        self._pub_t_tj.publish(Float32(data=_get_temp(['tj', 'Tj', 'TJ'])))
+        self._pub_t_tj.publish(Float32(data=_get_temp(['tj', 'Tj', 'TJ'], 'tj')))
 
         # ---- Power -----------------------------------------------------
         power = self._jetson.power
@@ -162,15 +169,15 @@ class JetsonStatsNode(Node):
             KeyValue(key='gpu_%',              value=str(round(gpu_val, 1))),
             KeyValue(key='ram_used_mb',        value=str(round(used_mb, 0))),
             KeyValue(key='ram_total_mb',       value=str(round(total_mb, 0))),
-            KeyValue(key='temp_cpu_c',         value=str(round(_get_temp(['cpu', 'CPU', 'cpu-thermal']), 1))),
-            KeyValue(key='temp_gpu_c',         value=str(round(_get_temp(['gpu', 'GPU', 'gpu-thermal']), 1))),
-            KeyValue(key='temp_soc0_c',        value=str(round(_get_temp(['soc0', 'soc', 'SOC0']), 1))),
-            KeyValue(key='temp_tj_c',          value=str(round(_get_temp(['tj', 'Tj', 'TJ']), 1))),
+            KeyValue(key='temp_cpu_c',         value=str(round(_get_temp(['cpu', 'CPU', 'cpu-thermal'], 'cpu'), 1))),
+            KeyValue(key='temp_gpu_c',         value=str(round(_get_temp(['gpu', 'GPU', 'gpu-thermal'], 'gpu'), 1))),
+            KeyValue(key='temp_soc0_c',        value=str(round(_get_temp(['soc0', 'soc', 'SOC0'], 'soc'), 1))),
+            KeyValue(key='temp_tj_c',          value=str(round(_get_temp(['tj', 'Tj', 'TJ'], 'tj'), 1))),
             KeyValue(key='power_total_mw',     value=str(round(total_power_mw, 0))),
             KeyValue(key='uptime_s',           value=str(round(uptime_s, 0))),
         ]
         # Warn if Tjunction > 85°C (Orin Nano thermal throttle threshold)
-        tj_val = _get_temp(['tj', 'Tj', 'TJ'])
+        tj_val = _get_temp(['tj', 'Tj', 'TJ'], 'tj')
         if tj_val > 85.0:
             status.level   = DiagnosticStatus.WARN
             status.message = f'temp_tj_c = {round(tj_val, 1)}°C — approaching throttle'
