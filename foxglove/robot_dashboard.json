@@ -1,0 +1,229 @@
+{
+  "configById": {
+    "RawMessages!a": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/odom"
+    },
+    "RawMessages!b": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/fmu/out/vehicle_odometry"
+    },
+    "Plot!obstacle": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "color": "#ff6b35",
+          "enabled": true,
+          "label": "Obstacle distance (m)",
+          "messagePath": "/depth_processor/obstacle_distance_m.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#e63946",
+          "enabled": true,
+          "label": "Stop threshold (0.6m)",
+          "messagePath": "/obstacle_detector/obstacle_detected.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "title": "Obstacle Detection",
+      "xAxisVal": "timestamp",
+      "yAxisPaths": []
+    },
+    "Plot!imu": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "color": "#4cc9f0",
+          "enabled": true,
+          "label": "Angular vel X",
+          "messagePath": "/imu/data.angular_velocity.x",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#7209b7",
+          "enabled": true,
+          "label": "Angular vel Y",
+          "messagePath": "/imu/data.angular_velocity.y",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#f72585",
+          "enabled": true,
+          "label": "Angular vel Z",
+          "messagePath": "/imu/data.angular_velocity.z",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "title": "IMU Angular Velocity",
+      "xAxisVal": "timestamp",
+      "yAxisPaths": []
+    },
+    "Plot!accel": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "color": "#06d6a0",
+          "enabled": true,
+          "label": "Accel X",
+          "messagePath": "/imu/data.linear_acceleration.x",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#118ab2",
+          "enabled": true,
+          "label": "Accel Y",
+          "messagePath": "/imu/data.linear_acceleration.y",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#ffd166",
+          "enabled": true,
+          "label": "Accel Z",
+          "messagePath": "/imu/data.linear_acceleration.z",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "title": "IMU Linear Acceleration",
+      "xAxisVal": "timestamp",
+      "yAxisPaths": []
+    },
+    "3D!main": {
+      "cameraState": {
+        "distance": 10,
+        "far": 5000,
+        "fovy": 45,
+        "near": 0.01,
+        "perspective": true,
+        "phi": 55,
+        "target": [0, 0, 0],
+        "targetOffset": [0, 0, 0],
+        "targetOrientation": [0, 0, 0, 1],
+        "thetaOffset": 45
+      },
+      "followMode": "follow-pose",
+      "followTf": "base_link",
+      "layers": {},
+      "publish": { "poseTopic": "/goal_pose", "pointTopic": "/clicked_point", "poseEstimateTopic": "/initialpose" },
+      "scene": {
+        "backgroundColor": "#1a1a2e",
+        "enableStats": false,
+        "labelScaleFactor": 1,
+        "meshUpAxis": "y-up"
+      },
+      "topics": {
+        "/scan": {
+          "colorMode": "colormap",
+          "colorMap": "turbo",
+          "decayTime": 0,
+          "pointSize": 3,
+          "visible": true
+        },
+        "/map": {
+          "colorMode": "flat",
+          "flatColor": "#3a86ff40",
+          "visible": true
+        },
+        "/camera/camera/color/image_raw": {
+          "cameraInfoTopic": "/camera/camera/color/camera_info",
+          "visible": true,
+          "distance": 2
+        },
+        "/odom": {
+          "visible": true,
+          "type": "arrow",
+          "color": "#06d6a0"
+        }
+      }
+    },
+    "Image!depth": {
+      "cameraTopic": "/camera/camera/depth/image_rect_raw",
+      "enabledMarkerTopics": [],
+      "synchronize": false,
+      "title": "Depth (D455)"
+    },
+    "Image!rgb": {
+      "cameraTopic": "/camera/camera/color/image_raw",
+      "enabledMarkerTopics": [],
+      "synchronize": false,
+      "title": "RGB (D455)"
+    },
+    "Log!main": {
+      "minLogLevel": 1,
+      "searchTerms": [],
+      "topics": ["/rosout"]
+    },
+    "TopicGraph!main": {},
+    "StateTransitions!obstacle": {
+      "paths": [
+        {
+          "label": "Obstacle Detected",
+          "timestampMethod": "receiveTime",
+          "value": "/obstacle_detector/obstacle_detected.data"
+        }
+      ],
+      "title": "Obstacle State"
+    }
+  },
+  "globalVariables": {},
+  "layout": {
+    "direction": "row",
+    "first": {
+      "direction": "column",
+      "first": "3D!main",
+      "second": {
+        "direction": "row",
+        "first": "Image!rgb",
+        "second": "Image!depth",
+        "splitPercentage": 50
+      },
+      "splitPercentage": 65
+    },
+    "second": {
+      "direction": "column",
+      "first": {
+        "direction": "column",
+        "first": "Plot!obstacle",
+        "second": "StateTransitions!obstacle",
+        "splitPercentage": 70
+      },
+      "second": {
+        "direction": "column",
+        "first": "Plot!imu",
+        "second": {
+          "direction": "column",
+          "first": "Plot!accel",
+          "second": "Log!main",
+          "splitPercentage": 50
+        },
+        "splitPercentage": 35
+      },
+      "splitPercentage": 35
+    },
+    "splitPercentage": 65
+  },
+  "playbackConfig": {
+    "speed": 1
+  },
+  "userNodes": {}
+}
