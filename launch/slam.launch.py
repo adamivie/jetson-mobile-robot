@@ -38,4 +38,22 @@ def generate_launch_description():
             parameters=[slam_params, {'use_sim_time': use_sim_time}],
             output='screen',
         ),
+
+        # Foxglove bridge — connect at ws://192.168.3.72:8765
+        Node(
+            package='foxglove_bridge',
+            executable='foxglove_bridge',
+            name='foxglove_bridge',
+            parameters=[{
+                'port': 8765,
+                'address': '0.0.0.0',
+                'tls': False,
+                'topic_whitelist': ['.*'],
+                'param_whitelist': ['.*'],
+                'max_qos_depth': 10,
+                'num_threads': 4,
+                'use_compression': False,
+            }],
+            output='screen',
+        ),
     ])

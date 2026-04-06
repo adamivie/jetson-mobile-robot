@@ -2,6 +2,10 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.substitutions import FindPackageShare
+import os
 
 
 def generate_launch_description():
@@ -68,6 +72,24 @@ def generate_launch_description():
                 '/home/slurd/ros2_ws/src/robot_vision/config/slam_toolbox.yaml',
                 {'use_sim_time': use_sim_time},
             ],
+            output='screen',
+        ),
+
+        # Foxglove bridge — connect at ws://192.168.3.72:8765
+        Node(
+            package='foxglove_bridge',
+            executable='foxglove_bridge',
+            name='foxglove_bridge',
+            parameters=[{
+                'port': 8765,
+                'address': '0.0.0.0',
+                'tls': False,
+                'topic_whitelist': ['.*'],
+                'param_whitelist': ['.*'],
+                'max_qos_depth': 10,
+                'num_threads': 4,
+                'use_compression': False,
+            }],
             output='screen',
         ),
     ])
