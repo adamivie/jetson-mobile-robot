@@ -53,6 +53,7 @@ class JetsonStatsNode(Node):
         self._pub_t_cpu   = self.create_publisher(Float32,              '/jetson/temp/cpu',       qos)
         self._pub_t_gpu   = self.create_publisher(Float32,              '/jetson/temp/gpu',       qos)
         self._pub_t_soc   = self.create_publisher(Float32,              '/jetson/temp/soc',       qos)
+        self._pub_t_tj    = self.create_publisher(Float32,              '/jetson/temp/tj',        qos)
         self._pub_power   = self.create_publisher(Float32,              '/jetson/power_mw',       qos)
         self._pub_uptime  = self.create_publisher(Float32,              '/jetson/uptime_s',       qos)
 
@@ -123,9 +124,12 @@ class JetsonStatsNode(Node):
                     return float(v)
             return 0.0
 
-        self._pub_t_cpu.publish(Float32(data=_get_temp(['CPU', 'cpu-thermal', 'cpu'])))
-        self._pub_t_gpu.publish(Float32(data=_get_temp(['GPU', 'gpu-thermal', 'gpu'])))
-        self._pub_t_soc.publish(Float32(data=_get_temp(['SOC0', 'Tboard', 'soc-thermal', 'soc'])))
+        self._pub_t_cpu.publish(Float32(data=_get_temp(['cpu', 'CPU', 'cpu-thermal'])))
+        self._pub_t_gpu.publish(Float32(data=_get_temp(['gpu', 'GPU', 'gpu-thermal'])))
+        # soc0/soc1/soc2 are the three SoC thermal zones; use soc0 as representative
+        self._pub_t_soc.publish(Float32(data=_get_temp(['soc0', 'soc', 'SOC0', 'soc-thermal'])))
+        # tj = Tjunction — highest temp across all cores, most useful single thermal value
+        self._pub_t_tj.publish(Float32(data=_get_temp(['tj', 'Tj', 'TJ'])))
 
         # ---- Power -----------------------------------------------------
         power = self._jetson.power
@@ -158,18 +162,18 @@ class JetsonStatsNode(Node):
             KeyValue(key='gpu_%',              value=str(round(gpu_val, 1))),
             KeyValue(key='ram_used_mb',        value=str(round(used_mb, 0))),
             KeyValue(key='ram_total_mb',       value=str(round(total_mb, 0))),
-            KeyValue(key='temp_cpu_c',         value=str(round(_get_temp(['CPU', 'cpu-thermal', 'cpu']), 1))),
-            KeyValue(key='temp_gpu_c',         value=str(round(_get_temp(['GPU', 'gpu-thermal', 'gpu']), 1))),
-            KeyValue(key='temp_soc_c',         value=str(round(_get_temp(['SOC0', 'Tboard', 'soc-thermal', 'soc']), 1))),
+            KeyValue(key='temp_cpu_c',         value=str(round(_get_temp(['cpu', 'CPU', 'cpu-thermal']), 1))),
+            KeyValue(key='temp_gpu_c',         value=str(round(_get_temp(['gpu', 'GPU', 'gpu-thermal']), 1))),
+            KeyValue(key='temp_soc0_c',        value=str(round(_get_temp(['soc0', 'soc', 'SOC0']), 1))),
+            KeyValue(key='temp_tj_c',          value=str(round(_get_temp(['tj', 'Tj', 'TJ']), 1))),
             KeyValue(key='power_total_mw',     value=str(round(total_power_mw, 0))),
             KeyValue(key='uptime_s',           value=str(round(uptime_s, 0))),
         ]
-        # Warn if any temp > 75°C
-        for kv in status.values:
-            if kv.key.startswith('temp_') and float(kv.value) > 75.0:
-                status.level   = DiagnosticStatus.WARN
-                status.message = f'{kv.key} = {kv.value}°C'
-                break
+        # Warn if Tjunction > 85°C (Orin Nano thermal throttle threshold)
+        tj_val = _get_temp(['tj', 'Tj', 'TJ'])
+        if tj_val > 85.0:
+            status.level   = DiagnosticStatus.WARN
+            status.message = f'temp_tj_c = {round(tj_val, 1)}°C — approaching throttle'
 
         diag = DiagnosticArray()
         diag.header.stamp = now
