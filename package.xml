@@ -15,6 +15,9 @@
   <depend>depth_image_proc</depend>
   <depend>pcl_ros</depend>
   <depend>realsense2_camera</depend>
+  <depend>rplidar_ros</depend>
+  <depend>slam_toolbox</depend>
+  <depend>nav2_bringup</depend>
 
   <buildtool_depend>ament_python</buildtool_depend>
   <test_depend>ament_lint_auto</test_depend>
