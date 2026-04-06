@@ -16,12 +16,12 @@
     },
     "Plot!obstacle": {
       "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
-      "paths": [
+      "series": [
         {
           "color": "#ff6b35",
           "enabled": true,
           "label": "Obstacle distance (m)",
-          "messagePath": "/depth_processor/obstacle_distance_m.data",
+          "value": "/depth_processor/obstacle_distance_m.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -29,7 +29,7 @@
           "color": "#e63946",
           "enabled": true,
           "label": "Stop threshold (0.6m)",
-          "messagePath": "/obstacle_detector/obstacle_detected.data",
+          "value": "/obstacle_detector/obstacle_detected.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         }
@@ -37,17 +37,16 @@
       "showXAxisLabels": true,
       "showYAxisLabels": true,
       "title": "Obstacle Detection",
-      "xAxisVal": "timestamp",
-      "yAxisPaths": []
+      "xAxisVal": "timestamp"
     },
     "Plot!imu": {
       "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
-      "paths": [
+      "series": [
         {
           "color": "#4cc9f0",
           "enabled": true,
           "label": "Angular vel X",
-          "messagePath": "/imu/data.angular_velocity.x",
+          "value": "/imu/data.angular_velocity.x",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -55,7 +54,7 @@
           "color": "#7209b7",
           "enabled": true,
           "label": "Angular vel Y",
-          "messagePath": "/imu/data.angular_velocity.y",
+          "value": "/imu/data.angular_velocity.y",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -63,7 +62,7 @@
           "color": "#f72585",
           "enabled": true,
           "label": "Angular vel Z",
-          "messagePath": "/imu/data.angular_velocity.z",
+          "value": "/imu/data.angular_velocity.z",
           "showLine": true,
           "timestampMethod": "receiveTime"
         }
@@ -71,17 +70,16 @@
       "showXAxisLabels": true,
       "showYAxisLabels": true,
       "title": "IMU Angular Velocity",
-      "xAxisVal": "timestamp",
-      "yAxisPaths": []
+      "xAxisVal": "timestamp"
     },
     "Plot!accel": {
       "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
-      "paths": [
+      "series": [
         {
           "color": "#06d6a0",
           "enabled": true,
           "label": "Accel X",
-          "messagePath": "/imu/data.linear_acceleration.x",
+          "value": "/imu/data.linear_acceleration.x",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -89,7 +87,7 @@
           "color": "#118ab2",
           "enabled": true,
           "label": "Accel Y",
-          "messagePath": "/imu/data.linear_acceleration.y",
+          "value": "/imu/data.linear_acceleration.y",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -97,7 +95,7 @@
           "color": "#ffd166",
           "enabled": true,
           "label": "Accel Z",
-          "messagePath": "/imu/data.linear_acceleration.z",
+          "value": "/imu/data.linear_acceleration.z",
           "showLine": true,
           "timestampMethod": "receiveTime"
         }
@@ -105,8 +103,7 @@
       "showXAxisLabels": true,
       "showYAxisLabels": true,
       "title": "IMU Linear Acceleration",
-      "xAxisVal": "timestamp",
-      "yAxisPaths": []
+      "xAxisVal": "timestamp"
     },
     "3D!main": {
       "cameraState": {
@@ -186,12 +183,12 @@
     },
     "Plot!jetson_load": {
       "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
-      "paths": [
+      "series": [
         {
           "color": "#4cc9f0",
           "enabled": true,
           "label": "GPU %",
-          "messagePath": "/jetson/gpu_percent.data",
+          "value": "/jetson/gpu_percent.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -199,7 +196,7 @@
           "color": "#f72585",
           "enabled": true,
           "label": "RAM used (MB)",
-          "messagePath": "/jetson/memory_used_mb.data",
+          "value": "/jetson/memory_used_mb.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         }
@@ -207,17 +204,16 @@
       "showXAxisLabels": true,
       "showYAxisLabels": true,
       "title": "Jetson GPU & Memory",
-      "xAxisVal": "timestamp",
-      "yAxisPaths": []
+      "xAxisVal": "timestamp"
     },
     "Plot!jetson_temp": {
       "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
-      "paths": [
+      "series": [
         {
           "color": "#ff6b35",
           "enabled": true,
           "label": "CPU °C",
-          "messagePath": "/jetson/temp/cpu.data",
+          "value": "/jetson/temp/cpu.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -225,7 +221,7 @@
           "color": "#e63946",
           "enabled": true,
           "label": "GPU °C",
-          "messagePath": "/jetson/temp/gpu.data",
+          "value": "/jetson/temp/gpu.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         },
@@ -233,7 +229,7 @@
           "color": "#ffd166",
           "enabled": true,
           "label": "SoC °C",
-          "messagePath": "/jetson/temp/soc.data",
+          "value": "/jetson/temp/soc.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         }
@@ -241,17 +237,16 @@
       "showXAxisLabels": true,
       "showYAxisLabels": true,
       "title": "Jetson Temperatures (°C)",
-      "xAxisVal": "timestamp",
-      "yAxisPaths": []
+      "xAxisVal": "timestamp"
     },
     "Plot!jetson_power": {
       "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
-      "paths": [
+      "series": [
         {
           "color": "#06d6a0",
           "enabled": true,
           "label": "Board Power (mW)",
-          "messagePath": "/jetson/power_mw.data",
+          "value": "/jetson/power_mw.data",
           "showLine": true,
           "timestampMethod": "receiveTime"
         }
@@ -259,8 +254,7 @@
       "showXAxisLabels": true,
       "showYAxisLabels": true,
       "title": "Jetson Power Draw (mW)",
-      "xAxisVal": "timestamp",
-      "yAxisPaths": []
+      "xAxisVal": "timestamp"
     },
     "Diagnostics!jetson": {
       "minLevel": 0,
