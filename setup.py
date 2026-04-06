@@ -21,6 +21,7 @@ setup(
             'depth_processor = robot_vision.depth_processor:main',
             'obstacle_detector = robot_vision.obstacle_detector:main',
             'px4_bridge = robot_vision.px4_bridge:main',
+            'jetson_stats = robot_vision.jetson_stats_node:main',
         ],
     },
 )

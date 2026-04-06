@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     """
-    Launch foxglove_bridge standalone.
+    Launch foxglove_bridge + jetson_stats_node standalone.
     Connect from browser: https://app.foxglove.dev -> Open Connection -> WebSocket
     URL: ws://192.168.3.72:8765
     Or open Foxglove desktop app and use same URL.
@@ -19,6 +19,14 @@ def generate_launch_description():
                               description='WebSocket port for Foxglove Studio'),
         DeclareLaunchArgument('address', default_value='0.0.0.0',
                               description='Bind address (0.0.0.0 = all interfaces)'),
+
+        Node(
+            package='robot_vision',
+            executable='jetson_stats',
+            name='jetson_stats',
+            parameters=[{'publish_rate_hz': 1.0}],
+            output='screen',
+        ),
 
         Node(
             package='foxglove_bridge',

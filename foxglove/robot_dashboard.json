@@ -183,9 +183,92 @@
         }
       ],
       "title": "Obstacle State"
+    },
+    "Plot!jetson_load": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "color": "#4cc9f0",
+          "enabled": true,
+          "label": "GPU %",
+          "messagePath": "/jetson/gpu_percent.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#f72585",
+          "enabled": true,
+          "label": "RAM used (MB)",
+          "messagePath": "/jetson/memory_used_mb.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "title": "Jetson GPU & Memory",
+      "xAxisVal": "timestamp",
+      "yAxisPaths": []
+    },
+    "Plot!jetson_temp": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "color": "#ff6b35",
+          "enabled": true,
+          "label": "CPU °C",
+          "messagePath": "/jetson/temp/cpu.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#e63946",
+          "enabled": true,
+          "label": "GPU °C",
+          "messagePath": "/jetson/temp/gpu.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "color": "#ffd166",
+          "enabled": true,
+          "label": "SoC °C",
+          "messagePath": "/jetson/temp/soc.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "title": "Jetson Temperatures (°C)",
+      "xAxisVal": "timestamp",
+      "yAxisPaths": []
+    },
+    "Plot!jetson_power": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "color": "#06d6a0",
+          "enabled": true,
+          "label": "Board Power (mW)",
+          "messagePath": "/jetson/power_mw.data",
+          "showLine": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "title": "Jetson Power Draw (mW)",
+      "xAxisVal": "timestamp",
+      "yAxisPaths": []
+    },
+    "Diagnostics!jetson": {
+      "minLevel": 0,
+      "pinnedIds": [],
+      "selectedName": "Jetson Stats",
+      "splitFraction": 0.5
     }
   },
-  "globalVariables": {},
   "layout": {
     "direction": "row",
     "first": {
@@ -209,14 +292,34 @@
       },
       "second": {
         "direction": "column",
-        "first": "Plot!imu",
+        "first": {
+          "direction": "column",
+          "first": "Plot!imu",
+          "second": {
+            "direction": "column",
+            "first": "Plot!accel",
+            "second": "Log!main",
+            "splitPercentage": 50
+          },
+          "splitPercentage": 35
+        },
         "second": {
           "direction": "column",
-          "first": "Plot!accel",
-          "second": "Log!main",
+          "first": {
+            "direction": "row",
+            "first": "Plot!jetson_load",
+            "second": "Plot!jetson_temp",
+            "splitPercentage": 50
+          },
+          "second": {
+            "direction": "row",
+            "first": "Plot!jetson_power",
+            "second": "Diagnostics!jetson",
+            "splitPercentage": 40
+          },
           "splitPercentage": 50
         },
-        "splitPercentage": 35
+        "splitPercentage": 65
       },
       "splitPercentage": 35
     },
