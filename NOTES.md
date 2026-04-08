@@ -103,6 +103,43 @@ setup.py
 
 ---
 
+## Autostart (systemd user services)
+
+Both services are **enabled and start automatically at boot** via systemd user linger.
+
+| Service | Launches | Unit file |
+|---------|----------|-----------|
+| `robot-foxglove` | `foxglove.launch.py` (bridge + jetson_stats) | `~/.config/systemd/user/robot-foxglove.service` |
+| `robot-lidar` | `lidar.launch.py` (YDLidar 4ROS) | `~/.config/systemd/user/robot-lidar.service` |
+
+```bash
+# Status
+systemctl --user status robot-foxglove robot-lidar
+
+# Logs (live)
+journalctl --user -u robot-foxglove -f
+journalctl --user -u robot-lidar -f
+
+# Restart after code changes
+systemctl --user restart robot-foxglove
+systemctl --user restart robot-lidar
+
+# Disable autostart
+systemctl --user disable robot-lidar
+```
+
+> **Note:** `systemctl --user` over non-interactive SSH requires:
+> `export XDG_RUNTIME_DIR=/run/user/1000 && export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus`
+> The PowerShell `jstart`/`jstop` aliases handle this automatically.
+
+### Re-installing after Jetson rebuild
+```bash
+scp scripts/robot-foxglove.service scripts/robot-lidar.service scripts/install_services.sh jetson:~/
+ssh jetson "bash ~/install_services.sh"
+```
+
+---
+
 ## Operational Commands
 
 ```bash

@@ -1,0 +1,20 @@
+[Unit]
+Description=Robot Foxglove Bridge + Jetson Stats
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '\
+  source /opt/ros/humble/setup.bash && \
+  source /home/slurd/ros2_ws/install/setup.bash && \
+  export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && \
+  exec ros2 launch robot_vision foxglove.launch.py'
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=robot-foxglove
+
+[Install]
+WantedBy=default.target
