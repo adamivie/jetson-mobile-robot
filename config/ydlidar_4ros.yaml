@@ -1,23 +1,23 @@
 ydlidar_ros2_driver_node:
   ros__parameters:
     port: /dev/ydlidar
-    baudrate: 230400
-    lidar_type: 1         # TYPE_TRIANGLE (TOF — EAI 4ROS uses triangle/TOF protocol)
+    frame_id: laser
+    ignore_array: ""
+    baudrate: 512000      # EAI 4ROS: 512000 baud
+    lidar_type: 0         # TYPE_TOF — 4ROS is a TOF lidar, not triangulation
     device_type: 0        # YDLIDAR_TYPE_SERIAL
-    sample_rate: 5        # 5K samples/s default for X4/4ROS class
+    sample_rate: 20       # 4ROS: 20K samples/s
     abnormal_check_count: 4
-    fixed_resolution: false
-    reversion: false      # set true if scan appears reversed/mirrored
-    inverted: false       # set true if mounting is inverted
+    resolution_fixed: true
+    reversion: false
+    inverted: true
     auto_reconnect: true
     isSingleChannel: false
     intensity: false
-    support_motor_dtr: false
+    support_motor_dtr: true   # 4ROS requires DTR to spin motor
     angle_max: 180.0
     angle_min: -180.0
-    range_max: 16.0       # 4ROS nominal max: 16m reliable (30m spec)
-    range_min: 0.1
-    frequency: 10.0       # 10 Hz scan rate
+    range_max: 64.0
+    range_min: 0.01
+    frequency: 10.0
     invalid_range_is_inf: false
-    frame_id: laser_frame
-    topic_name: scan

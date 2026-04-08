@@ -29,7 +29,7 @@ def generate_launch_description():
     lidar_node = Node(
         package='ydlidar_ros2_driver',
         executable='ydlidar_ros2_driver_node',
-        name='ydlidar_node',
+        name='ydlidar_ros2_driver_node',
         output='screen',
         parameters=[
             params_file,
