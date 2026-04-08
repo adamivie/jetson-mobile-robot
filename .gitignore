@@ -24,3 +24,6 @@ setup_jetson.log
 *~
 .DS_Store
 Thumbs.db
+
+# Vendor / reference code (extracted from Yahboom package — params already in config/)
+ydlidar_4ros/
