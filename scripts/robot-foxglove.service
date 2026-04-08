@@ -1,6 +1,6 @@
 [Unit]
 Description=Robot Foxglove Bridge + Jetson Stats
-After=network-online.target
+After=network-online.target jtop.service
 Wants=network-online.target
 
 [Service]

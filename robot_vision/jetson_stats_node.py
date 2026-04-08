@@ -66,15 +66,27 @@ class JetsonStatsNode(Node):
 
         self._jetson = jtop(interval=jtop_interval)
         self._jetson.attach(self._on_jtop_update)
-        try:
-            self._jetson.start()
-            self.get_logger().info(
-                f'jtop started — board: {self._jetson.board.get("hardware", {}).get("Module", "Jetson")}, '
-                f'interval={jtop_interval}s, publishing every {self._publish_every_n} ticks'
-            )
-        except JtopException as e:
-            self.get_logger().error(f'Failed to connect to jtop service: {e}')
-            raise
+
+        # Retry loop — jtop.service may not have fully initialised its socket yet
+        # at boot even after systemd says it's "active". Retry for up to 30 s.
+        import time as _time
+        for attempt in range(30):
+            try:
+                self._jetson.start()
+                self.get_logger().info(
+                    f'jtop started — board: {self._jetson.board.get("hardware", {}).get("Module", "Jetson")}, '
+                    f'interval={jtop_interval}s, publishing every {self._publish_every_n} ticks'
+                )
+                break
+            except JtopException as e:
+                if attempt < 29:
+                    self.get_logger().warn(
+                        f'jtop not ready (attempt {attempt+1}/30): {e} — retrying in 1s...'
+                    )
+                    _time.sleep(1.0)
+                else:
+                    self.get_logger().error(f'jtop unavailable after 30 attempts: {e}')
+                    raise
 
         self.get_logger().info(f'jetson_stats_node running at {rate_hz} Hz')
 
