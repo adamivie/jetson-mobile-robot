@@ -6,7 +6,10 @@ pkill -f "robot_vision/jetson_stats" 2>/dev/null   # installed executable name
 pkill -f "ros2 run robot_vision jetson_stats" 2>/dev/null
 pkill -f "ros2 launch robot_vision foxglove" 2>/dev/null
 pkill -f test_foxglove 2>/dev/null
-sleep 2
+sleep 1
+# Force-free port 8765 in case any process is still holding it
+fuser -k 8765/tcp 2>/dev/null
+sleep 1
 # Confirm everything is gone
 REMAINING=$(pgrep -f "foxglove_bridge\|robot_vision/jetson_stats\|jetson_stats_node" | wc -l)
 if [ "$REMAINING" -gt 0 ]; then
