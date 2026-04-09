@@ -18,7 +18,7 @@
 | **LiDAR** | YDLidar 4ROS / TG30 (USB, CP2102) — 30m TOF, 20K sps, 10 Hz |
 | **FC** | Pixhawk 6X — ArduRover firmware, USB-C → `/dev/pixhawk` (ttyACM0) |
 | **Drive** | 4-wheel mecanum, skid-steer frame — Ch1=strafe, Ch2=right, Ch3=left, Ch4=rotate |
-| **SSH** | `Host jetson` → `slurd@192.168.3.72` · key `id_ed25519` · passwordless sudo |
+| **SSH** | `Host jetson` → `slurd@10.0.0.104` (WiFi, DHCP) · `Host jetson-usb` → `slurd@192.168.55.1` (USB-C, always stable) |
 
 ---
 
@@ -120,26 +120,34 @@ foxglove/
 
 All services are **enabled and start automatically at boot** via systemd user linger.
 
-| Service | Launches | After |
-|---------|----------|-------|
-| `robot-foxglove` | `foxglove.launch.py` (bridge + jetson_stats) | — |
-| `robot-lidar` | `lidar.launch.py` (YDLidar 4ROS) | — |
-| `robot-mavros` | `mavros.launch.py` (MAVROS ArduRover bridge) | `robot-foxglove` |
-| `robot-drive` | `mecanum_drive.launch.py` (cmd_vel → RC override) | `robot-mavros` |
+| Service | Launches | After | Notes |
+|---------|----------|-------|-------|
+| `robot-foxglove` | `foxglove.launch.py` (bridge + jetson_stats) | — | always on |
+| `robot-lidar` | `lidar.launch.py` (YDLidar 4ROS only) | — | **disabled when SLAM active** |
+| `robot-slam` | `slam.launch.py` (YDLidar + slam_toolbox) | `robot-foxglove` | **conflicts with robot-lidar** |
+| `robot-mavros` | `mavros.launch.py` (MAVROS ArduRover bridge) | `robot-foxglove` | always on |
+| `robot-drive` | `mecanum_drive.launch.py` (cmd_vel → RC override) | `robot-mavros` | always on |
+
+> **SLAM vs lidar-only:** Only one of `robot-slam` / `robot-lidar` can run at a time — both own `/dev/ydlidar`.
+> Use the helper scripts to switch:
+> ```bash
+> bash ~/use_slam.sh    # switch to SLAM mode (disables robot-lidar, enables robot-slam)
+> bash ~/use_lidar.sh   # switch back to lidar-only
+> ```
 
 ```bash
 # Status
-systemctl --user status robot-foxglove robot-lidar robot-mavros robot-drive
+systemctl --user status robot-foxglove robot-slam robot-mavros robot-drive
 
 # Logs (live)
 journalctl --user -u robot-foxglove -f
-journalctl --user -u robot-lidar -f
+journalctl --user -u robot-slam -f
 journalctl --user -u robot-mavros -f
 journalctl --user -u robot-drive -f
 
 # Restart after code changes
 systemctl --user restart robot-foxglove
-systemctl --user restart robot-lidar
+systemctl --user restart robot-slam
 systemctl --user restart robot-mavros
 systemctl --user restart robot-drive
 ```
@@ -150,9 +158,58 @@ systemctl --user restart robot-drive
 
 ### Re-installing after Jetson rebuild
 ```bash
-scp scripts/robot-foxglove.service scripts/robot-lidar.service scripts/robot-mavros.service scripts/robot-drive.service scripts/install_services.sh jetson-usb:~/
-ssh jetson-usb "bash ~/install_services.sh"
+scp scripts/robot-foxglove.service scripts/robot-lidar.service scripts/robot-slam.service scripts/robot-mavros.service scripts/robot-drive.service scripts/install_services.sh scripts/use_slam.sh scripts/use_lidar.sh jetson-usb:~/
+ssh jetson-usb "bash ~/install_services.sh && bash ~/use_slam.sh"
 ```
+
+---
+
+## SLAM (slam_toolbox — lidar-only, no encoders)
+
+### How it works without wheel encoders
+slam_toolbox builds maps via **pure scan-matching** — it doesn't need odometry to accumulate a map.
+The `odom→base_link` transform is a static identity TF (robot appears stationary in odom frame).
+slam_toolbox uses consecutive scan correlation to estimate motion. Works well indoors at walking speed.
+
+**Limitation:** Without odometry, `minimum_travel_distance` and `minimum_travel_heading` must be `0.0`
+so every scan is processed (not just scans after detected motion). This is set in `config/slam_toolbox.yaml`.
+
+### TF Tree
+```
+map → odom → base_link → laser
+       ↑           ↑
+  slam_toolbox  static TF   (odom→base_link = identity until encoders added)
+  publishes     (0,0,0.1m)
+  map→odom
+```
+
+### Topics published
+| Topic | Type | Notes |
+|-------|------|-------|
+| `/map` | OccupancyGrid | Live 5cm resolution map |
+| `/map_metadata` | MapMetaData | Map dimensions |
+| `/scan` | LaserScan | 10 Hz, ~1970 pts, frame `laser` |
+| `/tf` | TF | `map→odom` (slam_toolbox), `base_link→laser` (static), `odom→base_link` (static identity) |
+
+### Save / load a map
+```bash
+# Save current map to file (while SLAM is running)
+ssh jetson "source /opt/ros/humble/setup.bash && source ~/ros2_ws/install/setup.bash && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && ros2 service call /slam_toolbox/save_map slam_toolbox/srv/SaveMap '{name: {data: /home/slurd/maps/mymap}}'"
+
+# Serialise the full pose graph (reloadable)
+ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph '{filename: {data: /home/slurd/maps/mymap}}'
+```
+
+### Foxglove SLAM Dashboard
+- **File:** `foxglove/slam_dashboard.json` — import via **Layouts → Import from file**
+- **Connection:** `ws://10.0.0.104:8765`
+- **3D panel:** `/map` (blue fill) + `/scan` (turbo), top-down view, follows `base_link`
+- **FC State panel:** `/mavros/state.system_status` (4=active) + VFR HUD speed/heading
+- **IMU panel:** `/mavros/mavros/data` angular velocity X/Y/Z  ← MAVROS 2.14 uses double namespace
+- **cmd_vel publish panel:** pre-filled forward command
+
+> **MAVROS 2.14 topic namespace quirk:** IMU is at `/mavros/mavros/data` (not `/mavros/imu/data`).
+> `connected`/`armed` are booleans — Foxglove Plot can't graph them. Use `system_status` (int) instead.
 
 ---
 
@@ -351,10 +408,10 @@ File: `foxglove/robot_dashboard.json` — import via **Layouts → Import from f
 | Task | Notes |
 |------|-------|
 | **D455 camera** | `ros2 launch robot_vision robot_vision.launch.py` |
-| **Static IP** | DHCP reservation for `10.0.0.96` before robot goes mobile |
-| **Nav stack** | Nav2 with `/cmd_vel` → already wired to mecanum drive |
+| **Static IP** | DHCP reservation for `10.0.0.104` before robot goes mobile |
+| **Nav stack** | Nav2 with `/cmd_vel` → already wired to mecanum drive (needs encoders for full autonomy) |
+| **Wheel encoders** | Add to drive motors → real odom → Nav2 local planner |
 | **Foxglove gamepad** | Publish `/cmd_vel` from Foxglove joystick panel |
-| **GUIDED mode** | `GUIDED_OPTIONS` param (TX-free velocity commands) — needs correct param name for this ArduRover version |
 
 ---
 
@@ -362,12 +419,14 @@ File: `foxglove/robot_dashboard.json` — import via **Layouts → Import from f
 
 | Commit | Description |
 |--------|-------------|
+| `ba944d6` | fix: Foxglove dashboard — correct MAVROS topic paths for v2.14 namespace |
+| `513dad5` | feat: Foxglove SLAM dashboard — map 3D, cmd_vel publish, MAVROS IMU/state, temps |
+| `bc74c55` | fix: ydlidar udev rule VID/PID not KERNELS path (was mapping to Pixhawk port) |
+| `3993cd8` | feat: SLAM launch — YDLidar 4ROS + slam_toolbox, static TFs |
 | `d303972` | feat: mecanum cmd_vel node + drive scripts + robot-drive service |
 | `7284f80` | feat: MAVROS ArduRover bridge — launch, config, systemd service |
 | `2735482` | fix: correct 4ROS params from official Yahboom YAML (lidar_type TOF, 20K sps, node name match) |
 | `cadfcf4` | feat: YDLidar 4ROS integration (SDK, driver, udev, config, launch) |
-| `f0e8e9f` | fix: kill script matches installed binary name `jetson_stats` — **root cause of SoC spikes** |
-| `d352d70` | fix: use jtop callback to guarantee fresh data on publish |
-| `afa1583` | fix: cache last-good temp values (intermediate attempt) |
+| `f0e8e9f` | fix: kill script matches installed binary name `jetson_stats` — root cause of SoC spikes |
 | `a0db3af` | fix: correct Foxglove Plot schema — paths[].id + foxglovePanelTitle |
 | `a0749ff` | fix: jtop temp keys lowercase on Orin Nano; add Tj(peak) topic |

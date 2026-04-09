@@ -1,0 +1,22 @@
+[Unit]
+Description=Robot SLAM (YDLidar 4ROS + slam_toolbox async mapping)
+# Can't share the serial port with robot-lidar — this service owns the lidar
+Conflicts=robot-lidar.service
+After=robot-foxglove.service
+Wants=robot-foxglove.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '\
+  source /opt/ros/humble/setup.bash && \
+  source /home/slurd/ros2_ws/install/setup.bash && \
+  export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && \
+  exec ros2 launch robot_vision slam.launch.py'
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=robot-slam
+
+[Install]
+WantedBy=default.target

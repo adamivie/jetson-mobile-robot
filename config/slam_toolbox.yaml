@@ -22,8 +22,11 @@ slam_toolbox:
     # Map update / resolution
     resolution: 0.05           # 5cm grid cells — good for indoor corridors
     max_laser_range: 30.0      # TG30 max range is 30m
-    minimum_travel_distance: 0.1
-    minimum_travel_heading: 0.1
+    # No wheel encoders — odom→base_link is a static identity TF so the robot
+    # never appears to move in the odom frame. Set both thresholds to 0 so
+    # slam_toolbox processes every scan via pure scan-matching (works great indoors).
+    minimum_travel_distance: 0.0
+    minimum_travel_heading: 0.0
     map_update_interval: 5.0   # seconds between map saves
     enable_interactive_mode: false
 

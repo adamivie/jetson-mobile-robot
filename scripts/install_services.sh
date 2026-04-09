@@ -11,6 +11,7 @@ cp ~/robot-foxglove.service "$UNIT_DIR/robot-foxglove.service"
 cp ~/robot-lidar.service    "$UNIT_DIR/robot-lidar.service"
 cp ~/robot-mavros.service   "$UNIT_DIR/robot-mavros.service"
 cp ~/robot-drive.service    "$UNIT_DIR/robot-drive.service"
+cp ~/robot-slam.service     "$UNIT_DIR/robot-slam.service"
 
 echo "==> Enabling systemd user linger (services start at boot without login)..."
 sudo loginctl enable-linger "$USER"
@@ -23,6 +24,12 @@ systemctl --user enable robot-foxglove.service
 systemctl --user enable robot-lidar.service
 systemctl --user enable robot-mavros.service
 systemctl --user enable robot-drive.service
+# robot-slam is installed but NOT auto-enabled — it conflicts with robot-lidar.
+# Enable one or the other:  systemctl --user enable robot-slam  (disables lidar-only)
+#                            systemctl --user enable robot-lidar (lidar without SLAM)
+echo "    NOTE: robot-slam.service installed but not enabled by default."
+echo "          It conflicts with robot-lidar (both own /dev/ydlidar)."
+echo "          To switch to SLAM mode run: bash ~/use_slam.sh"
 
 echo ""
 echo "==> Done. Services will autostart on next boot."
