@@ -9,6 +9,7 @@ mkdir -p "$UNIT_DIR"
 echo "==> Installing service files..."
 cp ~/robot-foxglove.service "$UNIT_DIR/robot-foxglove.service"
 cp ~/robot-lidar.service    "$UNIT_DIR/robot-lidar.service"
+cp ~/robot-mavros.service   "$UNIT_DIR/robot-mavros.service"
 
 echo "==> Enabling systemd user linger (services start at boot without login)..."
 sudo loginctl enable-linger "$USER"
@@ -19,17 +20,22 @@ systemctl --user daemon-reload
 echo "==> Enabling services..."
 systemctl --user enable robot-foxglove.service
 systemctl --user enable robot-lidar.service
+systemctl --user enable robot-mavros.service
 
 echo ""
 echo "==> Done. Services will autostart on next boot."
 echo "    To start them now:"
 echo "      systemctl --user start robot-foxglove"
 echo "      systemctl --user start robot-lidar"
+echo "      systemctl --user start robot-mavros"
 echo ""
 echo "    Useful commands:"
 echo "      systemctl --user status robot-foxglove"
 echo "      systemctl --user status robot-lidar"
+echo "      systemctl --user status robot-mavros"
 echo "      journalctl --user -u robot-foxglove -f"
 echo "      journalctl --user -u robot-lidar -f"
+echo "      journalctl --user -u robot-mavros -f"
 echo "      systemctl --user restart robot-foxglove"
 echo "      systemctl --user stop robot-lidar"
+echo "      systemctl --user stop robot-mavros"

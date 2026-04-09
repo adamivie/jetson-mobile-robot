@@ -1,0 +1,45 @@
+# MAVROS config for ArduRover on Pixhawk 6X
+# ArduRover skid-steer, connected via USB /dev/pixhawk
+
+mavros:
+  ros__parameters:
+    # Connection
+    fcu_url: "/dev/pixhawk:115200"
+    gcs_url: ""
+    target_system_id: 1
+    target_component_id: 1
+    fcu_protocol: "v2.0"
+
+    # Plugin whitelist — load only what we need for a rover
+    plugin_allowlist:
+      - sys_status
+      - sys_time
+      - command
+      - param
+      - setpoint_velocity
+      - setpoint_position
+      - manual_control
+      - rc_io
+      - waypoint
+      - home_position
+      - global_position
+      - local_position
+      - imu
+      - battery
+      - distance_sensor
+
+    # Frames
+    local_position:
+      frame_id: "map"
+      tf:
+        send: true
+        frame_id: "map"
+        child_frame_id: "base_link"
+
+    global_position:
+      frame_id: "map"
+      tf:
+        send: false
+
+    imu:
+      frame_id: "base_link"
