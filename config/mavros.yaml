@@ -10,23 +10,18 @@ mavros:
     target_component_id: 1
     fcu_protocol: "v2.0"
 
-    # Plugin whitelist — load only what we need for a rover
+    # Plugin allowlist — load only what we need.
+    # Eliminates the "multiple channels same topic different schema" Foxglove warnings
+    # caused by multiple MAVROS plugins registering on the same topic name.
     plugin_allowlist:
-      - sys_status
-      - sys_time
-      - command
-      - param
-      - setpoint_velocity
-      - setpoint_position
-      - manual_control
-      - rc_io
-      - waypoint
-      - home_position
-      - global_position
-      - local_position
-      - imu
-      - battery
-      - distance_sensor
+      - sys_status       # /mavros/state, /mavros/battery, /mavros/sys_status
+      - imu              # /mavros/mavros/data (IMU), /mavros/mavros/data_raw
+      - local_position   # /mavros/local_position/pose, TF map→base_link
+      - rc_io            # RC override (used by mecanum_drive_node)
+      - command          # arm/disarm/mode commands
+      - param            # parameter get/set
+      - setpoint_velocity # /mavros/mavros/cmd_vel (velocity setpoints)
+      - vfr_hud          # /mavros/vfr_hud (speed, heading, throttle)
 
     # Frames
     local_position:

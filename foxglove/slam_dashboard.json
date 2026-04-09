@@ -23,7 +23,7 @@
         "type": "point"
       },
       "scene": {
-        "backgroundColor": "#1a2030",
+        "backgroundColor": "#12151e",
         "enableStats": false,
         "labelScaleFactor": 1,
         "meshUpAxis": "z-up"
@@ -32,14 +32,15 @@
         "/map": {
           "visible": true,
           "colorMode": "gradient",
-          "gradient": ["#2e4a6e", "#c8d8f0"],
+          "gradient": ["#dde8f5", "#1a2a42"],
           "minValue": 0,
-          "maxValue": 100
+          "maxValue": 100,
+          "unknownColor": "#2a3550"
         },
         "/scan": {
           "visible": true,
           "colorMode": "flat",
-          "flatColor": "#4cc9f0",
+          "flatColor": "#f72585",
           "pointSize": 3,
           "decayTime": 0.15
         },
