@@ -65,19 +65,27 @@
       "paths": [
         {
           "timestampMethod": "receiveTime",
-          "value": "/mavros/state.connected",
+          "value": "/mavros/state.system_status",
           "enabled": true,
           "color": "#06d6a0",
           "id": "slam0001-0001-0001-0001-slam00010001",
-          "label": "FC Connected"
+          "label": "SYS Status (4=active)"
         },
         {
           "timestampMethod": "receiveTime",
-          "value": "/mavros/state.armed",
+          "value": "/mavros/vfr_hud.groundspeed",
           "enabled": true,
           "color": "#f72585",
           "id": "slam0001-0001-0001-0001-slam00010002",
-          "label": "Armed"
+          "label": "Ground Speed (m/s)"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/mavros/vfr_hud.heading",
+          "enabled": true,
+          "color": "#ffd166",
+          "id": "slam0001-0001-0001-0001-slam00010003",
+          "label": "Heading (deg)"
         }
       ],
       "showXAxisLabels": true,
@@ -91,7 +99,7 @@
       "paths": [
         {
           "timestampMethod": "receiveTime",
-          "value": "/mavros/imu/data.angular_velocity.x",
+          "value": "/mavros/mavros/data.angular_velocity.x",
           "enabled": true,
           "color": "#4cc9f0",
           "id": "slam0002-0001-0001-0001-slam00020001",
@@ -99,7 +107,7 @@
         },
         {
           "timestampMethod": "receiveTime",
-          "value": "/mavros/imu/data.angular_velocity.y",
+          "value": "/mavros/mavros/data.angular_velocity.y",
           "enabled": true,
           "color": "#7209b7",
           "id": "slam0002-0001-0001-0001-slam00020002",
@@ -107,7 +115,7 @@
         },
         {
           "timestampMethod": "receiveTime",
-          "value": "/mavros/imu/data.angular_velocity.z",
+          "value": "/mavros/mavros/data.angular_velocity.z",
           "enabled": true,
           "color": "#f72585",
           "id": "slam0002-0001-0001-0001-slam00020003",
