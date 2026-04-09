@@ -23,7 +23,7 @@
         "type": "point"
       },
       "scene": {
-        "backgroundColor": "#12151e",
+        "backgroundColor": "#111827",
         "enableStats": false,
         "labelScaleFactor": 1,
         "meshUpAxis": "z-up"
@@ -31,11 +31,10 @@
       "topics": {
         "/map": {
           "visible": true,
-          "colorMode": "gradient",
-          "gradient": ["#dde8f5", "#1a2a42"],
-          "minValue": 0,
-          "maxValue": 100,
-          "unknownColor": "#2a3550"
+          "colorMode": "custom",
+          "minColor": "#e8f4f8",
+          "maxColor": "#1a2a42",
+          "unknownColor": "#2d3a52"
         },
         "/scan": {
           "visible": true,
