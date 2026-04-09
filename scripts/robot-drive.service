@@ -1,0 +1,13 @@
+[Unit]
+Description=Mecanum Drive Node (cmd_vel → RC override)
+After=robot-mavros.service
+Wants=robot-mavros.service
+
+[Service]
+ExecStart=/bin/bash -c 'source /opt/ros/humble/setup.bash && source /home/slurd/ros2_ws/install/setup.bash && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && exec ros2 launch robot_vision mecanum_drive.launch.py'
+Restart=on-failure
+RestartSec=5
+Environment=HOME=/home/slurd
+
+[Install]
+WantedBy=default.target

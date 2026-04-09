@@ -22,6 +22,7 @@ setup(
             'obstacle_detector = robot_vision.obstacle_detector:main',
             'px4_bridge = robot_vision.px4_bridge:main',
             'jetson_stats = robot_vision.jetson_stats_node:main',
+            'mecanum_drive_node = robot_vision.mecanum_drive_node:main',
         ],
     },
 )
