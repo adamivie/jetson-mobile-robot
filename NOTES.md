@@ -16,7 +16,8 @@
 | **Storage** | NVMe `nvme0n1p1` — 234G total, ~27G used, 196G free (root) |
 | **Camera** | Intel RealSense D455 (USB-C) |
 | **LiDAR** | YDLidar 4ROS / TG30 (USB, CP2102) — 30m TOF, 20K sps, 10 Hz |
-| **FC** | Pixhawk 6X (Ethernet — hardware pending) |
+| **FC** | Pixhawk 6X — ArduRover firmware, USB-C → `/dev/pixhawk` (ttyACM0) |
+| **Drive** | 4-wheel mecanum, skid-steer frame — Ch1=strafe, Ch2=right, Ch3=left, Ch4=rotate |
 | **SSH** | `Host jetson` → `slurd@192.168.3.72` · key `id_ed25519` · passwordless sudo |
 
 ---
@@ -32,6 +33,8 @@
 | OpenCV | 4.5.4 | system python3 |
 | YDLidar SDK | 1.2.19 | built from source → `/usr/local` |
 | ydlidar_ros2_driver | 1.0.1 (humble branch) | in `~/ros2_ws` |
+| MAVROS | 2.14.0 | `ros-humble-mavros` + extras, GeographicLib datasets |
+| pymavlink | latest | direct RC override (TX-free drive) |
 
 ---
 
@@ -46,7 +49,9 @@
 ~/.ros/foxglove_bridge.log       ← bridge log
 ~/.ros/foxglove_bridge.pid       ← bridge PID
 /dev/ydlidar                     ← udev symlink → ttyUSB0 (CP2102, persistent)
+/dev/pixhawk                     ← udev symlink → ttyACM0 (VID=1209, PID=5740)
 /etc/udev/rules.d/99-ydlidar.rules
+/etc/udev/rules.d/99-pixhawk.rules
 ```
 
 ### In this repo (`c:\jetson1\`)
@@ -55,23 +60,31 @@ robot_vision/
   jetson_stats_node.py           ← jtop ROS2 node (10 topics @ 1 Hz)
   depth_processor.py             ← D455 depth → obstacle distance
   obstacle_detector.py           ← obstacle stop flag
-  px4_bridge.py                  ← Pixhawk uXRCE-DDS bridge
+  px4_bridge.py                  ← Pixhawk uXRCE-DDS bridge (unused — ArduRover uses MAVROS)
+  mecanum_drive_node.py          ← /cmd_vel → MAVLink RC override @ 20 Hz
 launch/
   foxglove.launch.py             ← launches jetson_stats + foxglove_bridge
   robot_vision.launch.py         ← D455 camera launch
   lidar.launch.py                ← YDLidar 4ROS launch
   slam.launch.py                 ← LiDAR + SLAM toolbox
-  px4_slam.launch.py             ← full stack with Pixhawk
-foxglove/
-  robot_dashboard.json           ← Foxglove layout (import via Layouts menu)
-scripts/
-  start_foxglove.sh
-  kill_foxglove.sh
-  setup_ydlidar_udev.sh          ← auto-detects CP210x, writes udev rule
+  mavros.launch.py               ← MAVROS ArduRover bridge
+  mecanum_drive.launch.py        ← mecanum_drive_node (cmd_vel → RC override)
 config/
+  mavros.yaml                    ← fcu_url=/dev/pixhawk:115200, no plugin_allowlist
   ydlidar_4ros.yaml              ← official Yahboom params (TG30/4ROS)
   slam_config.yaml
-setup.py
+scripts/
+  robot-foxglove.service         ← systemd user service
+  robot-lidar.service            ← systemd user service
+  robot-mavros.service           ← systemd user service (After=robot-foxglove)
+  robot-drive.service            ← systemd user service (After=robot-mavros)
+  install_services.sh            ← install + enable all 4 services
+  rc_drive.py                    ← manual pymavlink RC override test script
+  read_rc.py                     ← read live RC channel values from Pixhawk
+  disable_rc_failsafe.py         ← set FS_THR_ENABLE=0, FS_GCS_ENABLE=0 etc.
+  pull_px4_params.py             ← dump all 936 ArduRover params
+foxglove/
+  robot_dashboard.json           ← Foxglove layout (import via Layouts menu)
 ```
 
 ---
@@ -105,27 +118,30 @@ setup.py
 
 ## Autostart (systemd user services)
 
-Both services are **enabled and start automatically at boot** via systemd user linger.
+All services are **enabled and start automatically at boot** via systemd user linger.
 
-| Service | Launches | Unit file |
-|---------|----------|-----------|
-| `robot-foxglove` | `foxglove.launch.py` (bridge + jetson_stats) | `~/.config/systemd/user/robot-foxglove.service` |
-| `robot-lidar` | `lidar.launch.py` (YDLidar 4ROS) | `~/.config/systemd/user/robot-lidar.service` |
+| Service | Launches | After |
+|---------|----------|-------|
+| `robot-foxglove` | `foxglove.launch.py` (bridge + jetson_stats) | — |
+| `robot-lidar` | `lidar.launch.py` (YDLidar 4ROS) | — |
+| `robot-mavros` | `mavros.launch.py` (MAVROS ArduRover bridge) | `robot-foxglove` |
+| `robot-drive` | `mecanum_drive.launch.py` (cmd_vel → RC override) | `robot-mavros` |
 
 ```bash
 # Status
-systemctl --user status robot-foxglove robot-lidar
+systemctl --user status robot-foxglove robot-lidar robot-mavros robot-drive
 
 # Logs (live)
 journalctl --user -u robot-foxglove -f
 journalctl --user -u robot-lidar -f
+journalctl --user -u robot-mavros -f
+journalctl --user -u robot-drive -f
 
 # Restart after code changes
 systemctl --user restart robot-foxglove
 systemctl --user restart robot-lidar
-
-# Disable autostart
-systemctl --user disable robot-lidar
+systemctl --user restart robot-mavros
+systemctl --user restart robot-drive
 ```
 
 > **Note:** `systemctl --user` over non-interactive SSH requires:
@@ -134,9 +150,86 @@ systemctl --user disable robot-lidar
 
 ### Re-installing after Jetson rebuild
 ```bash
-scp scripts/robot-foxglove.service scripts/robot-lidar.service scripts/install_services.sh jetson:~/
-ssh jetson "bash ~/install_services.sh"
+scp scripts/robot-foxglove.service scripts/robot-lidar.service scripts/robot-mavros.service scripts/robot-drive.service scripts/install_services.sh jetson-usb:~/
+ssh jetson-usb "bash ~/install_services.sh"
 ```
+
+---
+
+## Pixhawk 6X / ArduRover
+
+### Hardware
+- **Connection:** USB-C (Pixhawk) → USB-A (Jetson) → `/dev/pixhawk` (udev symlink → ttyACM0)
+- **udev rule:** `/etc/udev/rules.d/99-pixhawk.rules` — VID=1209, PID=5740, MODE=0666
+- **Firmware:** ArduRover (confirmed — 936 params, `FRAME_CLASS=2`, `FRAME_TYPE=3`)
+- **Frame:** Skid steer with mecanum wheels
+
+### Key ArduRover Params
+| Param | Value | Notes |
+|-------|-------|-------|
+| `FRAME_CLASS` | 2 | Rover |
+| `FRAME_TYPE` | 3 | Skid steer |
+| `SERVO1_FUNCTION` | 33 | Steering |
+| `SERVO3_FUNCTION` | 35 | Throttle |
+| `CRUISE_SPEED` | 2.0 | m/s |
+| `ARMING_CHECK` | 0 | Disabled |
+| `ARMING_REQUIRE` | 0 | Disabled |
+| `FS_THR_ENABLE` | 0 | RC failsafe off |
+| `FS_GCS_ENABLE` | 0 | GCS failsafe off |
+| `RC_OVERRIDE_TIME` | -1 | Override never expires |
+
+### RC Channel Mapping (confirmed physical)
+| Channel | Function | 1000 | 1500 | 2000 |
+|---------|----------|------|------|------|
+| Ch1 | Strafe | Left | Stop | Right |
+| Ch2 | Right wheels | Reverse | Stop | Forward |
+| Ch3 | Left wheels | Reverse | Stop | Forward |
+| Ch4 | Rotate | Right | Stop | Left |
+
+### cmd_vel → RC Override Mapping
+| `cmd_vel` field | RC channel | Notes |
+|-----------------|-----------|-------|
+| `linear.x` | Ch2 + Ch3 | Forward/reverse both wheel sets |
+| `linear.y` | Ch1 | Strafe (mecanum only) |
+| `angular.z` | Ch4 + differential Ch2/Ch3 | Rotate |
+
+### Drive Commands
+```bash
+# Forward at 50%
+ros2 topic pub --rate 10 /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.5}}'
+
+# Strafe right
+ros2 topic pub --rate 10 /cmd_vel geometry_msgs/msg/Twist '{linear: {y: 0.5}}'
+
+# Rotate left
+ros2 topic pub --rate 10 /cmd_vel geometry_msgs/msg/Twist '{angular: {z: 0.5}}'
+
+# Combined diagonal + rotate
+ros2 topic pub --rate 10 /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.3, y: 0.2}, angular: {z: -0.1}}'
+```
+> **Important:** Publish at ≥ 2 Hz — `mecanum_drive_node` stops wheels after 0.5s without a message.
+
+### Manual RC Override (test / debug)
+```bash
+# Stop MAVROS first (serial port conflict with direct pymavlink)
+systemctl --user stop robot-mavros robot-drive
+
+python3 ~/rc_drive.py <left_pwm> <right_pwm> <duration> [strafe_pwm] [rotate_pwm]
+# e.g. forward: python3 ~/rc_drive.py 2000 2000 2
+# e.g. strafe right: python3 ~/rc_drive.py 1500 1500 2 2000
+
+systemctl --user start robot-mavros robot-drive
+```
+
+### MAVROS Topics
+| Topic | Type | Notes |
+|-------|------|-------|
+| `/mavros/state` | State | `connected`, `armed`, `mode` |
+| `/mavros/imu/data` | Imu | 50 Hz |
+| `/mavros/battery` | BatteryState | |
+| `/cmd_vel` | Twist | **mecanum_drive_node** subscribes here |
+
+
 
 ---
 
@@ -258,15 +351,10 @@ File: `foxglove/robot_dashboard.json` — import via **Layouts → Import from f
 | Task | Notes |
 |------|-------|
 | **D455 camera** | `ros2 launch robot_vision robot_vision.launch.py` |
-| **Static IP** | DHCP reservation for `192.168.3.72` before robot goes mobile |
-| **Pixhawk 6X** | `bash ~/build_px4_ws.sh` → QGC params → `ros2 launch robot_vision px4_slam.launch.py` |
-
-### Pixhawk 6X QGC Parameters (when hardware arrives)
-```
-UXRCE_DDS_CFG = 1000          (Ethernet)
-UXRCE_DDS_AG_IP = 3232236360  (= 192.168.3.72)
-UXRCE_DDS_PRT = 8888
-```
+| **Static IP** | DHCP reservation for `10.0.0.96` before robot goes mobile |
+| **Nav stack** | Nav2 with `/cmd_vel` → already wired to mecanum drive |
+| **Foxglove gamepad** | Publish `/cmd_vel` from Foxglove joystick panel |
+| **GUIDED mode** | `GUIDED_OPTIONS` param (TX-free velocity commands) — needs correct param name for this ArduRover version |
 
 ---
 
@@ -274,6 +362,8 @@ UXRCE_DDS_PRT = 8888
 
 | Commit | Description |
 |--------|-------------|
+| `d303972` | feat: mecanum cmd_vel node + drive scripts + robot-drive service |
+| `7284f80` | feat: MAVROS ArduRover bridge — launch, config, systemd service |
 | `2735482` | fix: correct 4ROS params from official Yahboom YAML (lidar_type TOF, 20K sps, node name match) |
 | `cadfcf4` | feat: YDLidar 4ROS integration (SDK, driver, udev, config, launch) |
 | `f0e8e9f` | fix: kill script matches installed binary name `jetson_stats` — **root cause of SoC spikes** |
