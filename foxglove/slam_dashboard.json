@@ -1,0 +1,221 @@
+{
+  "configById": {
+    "3D!slam": {
+      "cameraState": {
+        "distance": 15,
+        "far": 5000,
+        "fovy": 45,
+        "near": 0.01,
+        "perspective": false,
+        "phi": 0,
+        "target": [0, 0, 0],
+        "targetOffset": [0, 0, 0],
+        "targetOrientation": [0, 0, 0, 1],
+        "thetaOffset": 0
+      },
+      "followMode": "follow-pose",
+      "followTf": "base_link",
+      "layers": {},
+      "publish": {
+        "poseTopic": "/goal_pose",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "type": "point"
+      },
+      "scene": {
+        "backgroundColor": "#0f0f1a",
+        "enableStats": false,
+        "labelScaleFactor": 1,
+        "meshUpAxis": "z-up"
+      },
+      "topics": {
+        "/map": {
+          "visible": true,
+          "colorMode": "flat",
+          "flatColor": "#3a86ff55"
+        },
+        "/scan": {
+          "visible": true,
+          "colorMode": "colormap",
+          "colorMap": "turbo",
+          "pointSize": 3,
+          "decayTime": 0.15
+        },
+        "/tf": {
+          "visible": true
+        },
+        "/tf_static": {
+          "visible": true
+        }
+      },
+      "foxglovePanelTitle": "SLAM Map (top-down)"
+    },
+
+    "Publish!cmdvel": {
+      "topicName": "/cmd_vel",
+      "datatype": "geometry_msgs/msg/Twist",
+      "buttonText": "Send",
+      "buttonTooltip": "Publish cmd_vel",
+      "value": "{\n  \"linear\": {\"x\": 0.3, \"y\": 0.0, \"z\": 0.0},\n  \"angular\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0}\n}",
+      "foxglovePanelTitle": "Drive (cmd_vel)"
+    },
+
+    "Plot!mavros_state": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/mavros/state.connected",
+          "enabled": true,
+          "color": "#06d6a0",
+          "id": "slam0001-0001-0001-0001-slam00010001",
+          "label": "FC Connected"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/mavros/state.armed",
+          "enabled": true,
+          "color": "#f72585",
+          "id": "slam0001-0001-0001-0001-slam00010002",
+          "label": "Armed"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "foxglovePanelTitle": "FC State",
+      "xAxisVal": "timestamp"
+    },
+
+    "Plot!mavros_imu": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/mavros/imu/data.angular_velocity.x",
+          "enabled": true,
+          "color": "#4cc9f0",
+          "id": "slam0002-0001-0001-0001-slam00020001",
+          "label": "ω X"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/mavros/imu/data.angular_velocity.y",
+          "enabled": true,
+          "color": "#7209b7",
+          "id": "slam0002-0001-0001-0001-slam00020002",
+          "label": "ω Y"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/mavros/imu/data.angular_velocity.z",
+          "enabled": true,
+          "color": "#f72585",
+          "id": "slam0002-0001-0001-0001-slam00020003",
+          "label": "ω Z"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "foxglovePanelTitle": "IMU (MAVROS)",
+      "xAxisVal": "timestamp"
+    },
+
+    "Plot!jetson_temp": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/jetson/temp/cpu.data",
+          "enabled": true,
+          "color": "#4e98e2",
+          "id": "slam0003-0001-0001-0001-slam00030001",
+          "label": "CPU"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/jetson/temp/gpu.data",
+          "enabled": true,
+          "color": "#f5774d",
+          "id": "slam0003-0001-0001-0001-slam00030002",
+          "label": "GPU"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/jetson/temp/tj.data",
+          "enabled": true,
+          "color": "#e63946",
+          "id": "slam0003-0001-0001-0001-slam00030003",
+          "label": "Tj (peak)"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "foxglovePanelTitle": "Temps (°C)",
+      "xAxisVal": "timestamp"
+    },
+
+    "Plot!jetson_load": {
+      "legend": { "display": "floating", "position": "topLeft", "showSeriesSelection": true },
+      "paths": [
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/jetson/gpu_percent.data",
+          "enabled": true,
+          "color": "#4cc9f0",
+          "id": "slam0004-0001-0001-0001-slam00040001",
+          "label": "GPU %"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "/jetson/memory_used_mb.data",
+          "enabled": true,
+          "color": "#f72585",
+          "id": "slam0004-0001-0001-0001-slam00040002",
+          "label": "RAM (MB)"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "foxglovePanelTitle": "Jetson Load",
+      "xAxisVal": "timestamp"
+    },
+
+    "Log!main": {
+      "minLogLevel": 1,
+      "searchTerms": [],
+      "topics": ["/rosout"]
+    }
+  },
+
+  "layout": {
+    "direction": "row",
+    "first": "3D!slam",
+    "second": {
+      "direction": "column",
+      "first": "Publish!cmdvel",
+      "second": {
+        "direction": "column",
+        "first": "Plot!mavros_state",
+        "second": {
+          "direction": "column",
+          "first": "Plot!mavros_imu",
+          "second": {
+            "direction": "row",
+            "first": "Plot!jetson_temp",
+            "second": "Plot!jetson_load",
+            "splitPercentage": 50
+          },
+          "splitPercentage": 40
+        },
+        "splitPercentage": 20
+      },
+      "splitPercentage": 20
+    },
+    "splitPercentage": 68
+  },
+
+  "playbackConfig": {
+    "speed": 1
+  },
+  "userNodes": {}
+}
